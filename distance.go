@@ -9,36 +9,37 @@ func Distance(s1, s2 string) int {
 
 func Operations(s1, s2 string) []string {
 	d := matrix(s1, s2)
-
-	var ops []string
-	for i, j := len(s1), len(s2); i > 0 || j > 0; {
-		switch {
-		case i == 0:
-			ops = append(ops, fmt.Sprintf("add %c", s2[j-1]))
-			j = j - 1
-		case j == 0:
-			ops = append(ops, fmt.Sprintf("delete %c", s1[i-1]))
-			i = i - 1
-		case s1[i-1] == s2[j-1] && d[i][j] == d[i-1][j-1]:
-			ops = append(ops, fmt.Sprintf("keep %c", s2[j-1]))
-			i, j = i-1, j-1
-		case d[i-1][j] <= d[i][j-1] && d[i-1][j] <= d[i-1][j-1]:
-			ops = append(ops, fmt.Sprintf("delete %c", s1[i-1]))
-			i = i - 1
-		case d[i][j-1] <= d[i-1][j] && d[i][j-1] <= d[i-1][j-1]:
-			ops = append(ops, fmt.Sprintf("add %c", s2[j-1]))
-			j = j - 1
-		default:
-			ops = append(ops, fmt.Sprintf("swap %c for %c", s2[j-1], s1[i-1]))
-			i, j = i-1, j-1
-		}
-	}
-
-	for i, j := 0, len(ops)-1; i < j; i, j = i+1, j-1 {
-		ops[i], ops[j] = ops[j], ops[i]
-	}
-
+	ops := operations(s1, s2, len(s1), len(s2), d)
 	return ops
+}
+
+func operations(s1, s2 string, i, j int, d [][]int) []string {
+	switch {
+	case i == 0 && j == 0:
+		return []string{s1}
+	case i == 0:
+		ops := operations(s1, s2, i, j-1, d)
+		last := ops[len(ops)-1]
+		return append(ops, fmt.Sprintf("add %c at %d", s2[j-1], j-1), last[:j-1]+s2[j-1:j]+last[j-1:])
+	case j == 0:
+		ops := operations(s1, s2, i-1, j, d)
+		last := ops[len(ops)-1]
+		return append(ops, fmt.Sprintf("delete %c at %d", last[j], j), last[:j]+last[j+1:])
+	case s1[i-1] == s2[j-1] && d[i][j] == d[i-1][j-1]:
+		return operations(s1, s2, i-1, j-1, d)
+	case d[i-1][j] <= min(d[i][j-1], d[i-1][j-1]):
+		ops := operations(s1, s2, i-1, j, d)
+		last := ops[len(ops)-1]
+		return append(ops, fmt.Sprintf("delete %c at %d", last[j], j), last[:j]+last[j+1:])
+	case d[i][j-1] <= min(d[i-1][j], d[i-1][j-1]):
+		ops := operations(s1, s2, i, j-1, d)
+		last := ops[len(ops)-1]
+		return append(ops, fmt.Sprintf("add %c at %d", s2[j-1], j-1), last[:j-1]+s2[j-1:j]+last[j-1:])
+	default:
+		ops := operations(s1, s2, i-1, j-1, d)
+		last := ops[len(ops)-1]
+		return append(ops, fmt.Sprintf("swap %c for %c at %d", s2[j-1], s1[i-1], j-1), last[:j-1]+s2[j-1:j]+last[j:])
+	}
 }
 
 func matrix(s1, s2 string) [][]int {
