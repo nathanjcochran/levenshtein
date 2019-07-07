@@ -91,12 +91,31 @@ func (m *Matrix) String() string {
 			}
 		}
 	}
-	fmtStr := fmt.Sprintf("%%%dd", max/10+1)
+	fmtStr := fmt.Sprintf("%%%dv", max/10+1)
+
+	// First row contains characters of the target word
+	strs := []string{
+		fmt.Sprintf(fmtStr, " "),
+		fmt.Sprintf(fmtStr, " "),
+	}
+	for _, r := range m.target {
+		strs = append(strs, fmt.Sprintf(fmtStr, string(r)))
+	}
 
 	// Assemble the string representation of the matrix
-	var rowStrs []string
-	for _, row := range m.matrix {
+	rowStrs := []string{
+		strings.Join(strs, " "),
+	}
+	for i, row := range m.matrix {
+		// First column contains characters of the source word
 		var strs []string
+		if i == 0 {
+			strs = []string{fmt.Sprintf(fmtStr, " ")}
+		} else {
+			strs = []string{fmt.Sprintf(fmtStr, string(m.source[i-1]))}
+		}
+
+		// Fill in rest of the columns
 		for _, val := range row {
 			strs = append(strs, fmt.Sprintf(fmtStr, val))
 		}

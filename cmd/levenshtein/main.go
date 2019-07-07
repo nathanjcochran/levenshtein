@@ -18,6 +18,7 @@ func main() {
 
 	matrix := levenshtein.Build(os.Args[1], os.Args[2])
 
+	fmt.Printf("Matrix:\n%s\n\n", matrix)
 	fmt.Printf("Edit distance: %d\n", matrix.Distance())
 	fmt.Printf("Operations:\n")
 	for _, op := range matrix.Operations() {

@@ -18,12 +18,13 @@ func Example() {
 
 	// Output:
 	// Matrix:
-	// 0 1 2 3 4 5
-	// 1 1 2 3 4 5
-	// 2 2 2 2 3 4
-	// 3 3 2 3 3 4
-	// 4 4 3 3 3 4
-	// 5 5 4 4 4 3
+	//     a r o s e
+	//   0 1 2 3 4 5
+	// h 1 1 2 3 4 5
+	// o 2 2 2 2 3 4
+	// r 3 3 2 3 3 4
+	// s 4 4 3 3 3 4
+	// e 5 5 4 4 4 3
 	//
 	// Edit distance: 3
 	// Operations:
@@ -39,12 +40,13 @@ func ExampleBuild() {
 	fmt.Println(levenshtein.Build("horse", "arose"))
 
 	// Output:
-	// 0 1 2 3 4 5
-	// 1 1 2 3 4 5
-	// 2 2 2 2 3 4
-	// 3 3 2 3 3 4
-	// 4 4 3 3 3 4
-	// 5 5 4 4 4 3
+	//     a r o s e
+	//   0 1 2 3 4 5
+	// h 1 1 2 3 4 5
+	// o 2 2 2 2 3 4
+	// r 3 3 2 3 3 4
+	// s 4 4 3 3 3 4
+	// e 5 5 4 4 4 3
 }
 
 func ExampleMatrix_Distance() {
