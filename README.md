@@ -2,6 +2,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/nathanjcochran/levenshtein)](https://goreportcard.com/report/github.com/nathanjcochran/levenshtein)
 [![GoDoc](https://godoc.org/github.com/nathanjcochran/levenshtein?status.svg)](https://godoc.org/github.com/nathanjcochran/levenshtein) 
+[![license](https://img.shields.io/github/license/nathanjcochran/levenshtein.svg?maxAge=2592000)](LICENSE)
 
 This package provides functions for calculating the [Levenshtein
 distance](https://en.wikipedia.org/wiki/Levenshtein_distance) (a type of
