@@ -9,6 +9,7 @@ import (
 func Example() {
 	matrix := levenshtein.Build("horse", "arose")
 
+	fmt.Printf("Matrix:\n%s\n\n", matrix)
 	fmt.Printf("Edit distance: %d\n", matrix.Distance())
 	fmt.Printf("Operations:\n")
 	for _, op := range matrix.Operations() {
@@ -16,6 +17,14 @@ func Example() {
 	}
 
 	// Output:
+	// Matrix:
+	// 0 1 2 3 4 5
+	// 1 1 2 3 4 5
+	// 2 2 2 2 3 4
+	// 3 3 2 3 3 4
+	// 4 4 3 3 3 4
+	// 5 5 4 4 4 3
+	//
 	// Edit distance: 3
 	// Operations:
 	//    swap a at index 0: aorse
