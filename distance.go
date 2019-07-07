@@ -1,3 +1,14 @@
+// Package levenshtein provides functions for calculating the levenshtein
+// distance (i.e. edit distance) between two words, and for generating a
+// minimal list of edit operations required to convert the source word into
+// the target word. It does this by building an edit matrix according to the
+// Wagner-Fischer Algorithm. Alternative insertion/removal/swap costs can be
+// provided as options. The list of edit operations is retrieved via a
+// recursive algorithm which reads off a backtrace of edit operations from the
+// matrix.
+//
+// More information about the Wagner-Fischer algorithm can be found here:
+// https://en.wikipedia.org/wiki/Wagner–Fischer_algorithm
 package levenshtein
 
 import "fmt"
@@ -157,15 +168,20 @@ func (m *Matrix) fill() {
 
 // Distance builds a matrix and returns the edit distance between the two
 // strings - i.e. the minimum number of edits required to transform the source
-// string into the target string.
-func Distance(source, target string) int {
-	return Build(source, target).Distance()
+// string into the target string. This method is a short-cut, useful in cases
+// where you do not need to use the edit matrix for any other purpose. It is
+// equivalent to: Build(source, target, options...).Distance()
+func Distance(source, target string, options ...Option) int {
+	return Build(source, target, options...).Distance()
 }
 
 // Operations builds a matrix and returns a minimal list of edit operations
-// required to transform the source string into the target string.
-func Operations(source, target string) []Operation {
-	return Build(source, target).Operations()
+// required to transform the source string into the target string. This method
+// is a short-cut, useful in cases where you do not need to use the edit
+// matrix for any other purpose. It is equivalent to:
+// Build(source, target, options...).Distance()
+func Operations(source, target string, options ...Option) []Operation {
+	return Build(source, target, options...).Operations()
 }
 
 // Distance returns the edit distance between the two strings - i.e. the
