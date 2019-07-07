@@ -5,21 +5,24 @@ import "fmt"
 type OpType int8
 
 const (
-	Add OpType = iota
+	Insert OpType = iota
 	Remove
+	Keep
 	Swap
 )
 
 func (o OpType) String() string {
 	switch o {
-	case Add:
-		return "add"
+	case Insert:
+		return "insert"
 	case Remove:
 		return "remove"
+	case Keep:
+		return "keep"
 	case Swap:
 		return "swap"
 	default:
-		panic(fmt.Sprintf("unexpected OpType: %v", o))
+		panic(fmt.Sprintf("invalid OpType: %d", o))
 	}
 }
 
@@ -31,72 +34,29 @@ type Operation struct {
 }
 
 func (o Operation) String() string {
-	return fmt.Sprintf("%s %c at index %d: %s", o.Type, o.Char, o.Index, o.Result)
+	return fmt.Sprintf("%6s %c at index %d: %s", o.Type, o.Char, o.Index, o.Result)
 }
 
-func Distance(s1, s2 string) int {
-	d := matrix(s1, s2)
-	return d[len(s1)][len(s2)]
+type Matrix struct {
+	s1     string
+	s2     string
+	matrix [][]int
 }
 
-func Operations(s1, s2 string) []Operation {
-	d := matrix(s1, s2)
-	ops := operations(s1, s2, len(s1), len(s2), d)
-	return ops[1:]
-}
-
-func operations(s1, s2 string, i, j int, d [][]int) []Operation {
-	switch {
-	case i > 0 && d[i-1][j]+1 == d[i][j]:
-		ops := operations(s1, s2, i-1, j, d)
-		prev := ops[len(ops)-1]
-		return append(ops, Operation{
-			Type:   Remove,
-			Index:  j,
-			Char:   prev.Result[j],
-			Result: prev.Result[:j] + prev.Result[j+1:],
-		})
-	case j > 0 && d[i][j-1]+1 == d[i][j]:
-		ops := operations(s1, s2, i, j-1, d)
-		prev := ops[len(ops)-1]
-		return append(ops, Operation{
-			Type:   Add,
-			Index:  j - 1,
-			Char:   s2[j-1],
-			Result: prev.Result[:j-1] + s2[j-1:j] + prev.Result[j-1:],
-		})
-	case i > 0 && j > 0 && d[i-1][j-1]+1 == d[i][j]:
-		ops := operations(s1, s2, i-1, j-1, d)
-		prev := ops[len(ops)-1]
-		return append(ops, Operation{
-			Type:   Swap,
-			Index:  j - 1,
-			Char:   s2[j-1],
-			Result: prev.Result[:j-1] + s2[j-1:j] + prev.Result[j:],
-		})
-	case i > 0 && j > 0 && d[i-1][j-1] == d[i][j]:
-		return operations(s1, s2, i-1, j-1, d)
-	default:
-		return []Operation{{
-			Result: s1,
-		}}
-	}
-}
-
-func matrix(s1, s2 string) [][]int {
-	d := make([][]int, len(s1)+1)
-	for i := range d {
-		d[i] = make([]int, len(s2)+1)
+func Build(s1, s2 string) *Matrix {
+	m := make([][]int, len(s1)+1)
+	for i := range m {
+		m[i] = make([]int, len(s2)+1)
 	}
 
 	// Deletions to get to empty target string from input string
 	for i := 1; i <= len(s1); i++ {
-		d[i][0] = i
+		m[i][0] = i
 	}
 
 	// Insertions to get to target string from empty string
 	for j := 1; j <= len(s2); j++ {
-		d[0][j] = j
+		m[0][j] = j
 	}
 
 	for i := 1; i <= len(s1); i++ {
@@ -106,15 +66,79 @@ func matrix(s1, s2 string) [][]int {
 				cost = 0
 			}
 
-			d[i][j] = min(
-				d[i-1][j]+1,
-				d[i][j-1]+1,
-				d[i-1][j-1]+cost,
+			m[i][j] = min(
+				m[i-1][j]+1,
+				m[i][j-1]+1,
+				m[i-1][j-1]+cost,
 			)
 		}
 	}
 
-	return d
+	return &Matrix{
+		s1:     s1,
+		s2:     s2,
+		matrix: m,
+	}
+}
+
+func Distance(s1, s2 string) int {
+	return Build(s1, s2).Distance()
+}
+
+func Operations(s1, s2 string) []Operation {
+	return Build(s1, s2).Operations()
+}
+
+func (m *Matrix) Distance() int {
+	return m.matrix[len(m.s1)][len(m.s2)]
+}
+
+func (m *Matrix) Operations() []Operation {
+	ops := m.backtrace(len(m.s1), len(m.s2))
+	return ops[1:]
+}
+
+func (m *Matrix) backtrace(i, j int) []Operation {
+	switch {
+	case j > 0 && m.matrix[i][j-1]+1 == m.matrix[i][j]:
+		ops := m.backtrace(i, j-1)
+		prev := ops[len(ops)-1]
+		return append(ops, Operation{
+			Type:   Insert,
+			Index:  j - 1,
+			Char:   m.s2[j-1],
+			Result: prev.Result[:j-1] + m.s2[j-1:j] + prev.Result[j-1:],
+		})
+	case i > 0 && m.matrix[i-1][j]+1 == m.matrix[i][j]:
+		ops := m.backtrace(i-1, j)
+		prev := ops[len(ops)-1]
+		return append(ops, Operation{
+			Type:   Remove,
+			Index:  j,
+			Char:   prev.Result[j],
+			Result: prev.Result[:j] + prev.Result[j+1:],
+		})
+	case i > 0 && j > 0 && m.matrix[i-1][j-1]+1 == m.matrix[i][j]:
+		ops := m.backtrace(i-1, j-1)
+		prev := ops[len(ops)-1]
+		return append(ops, Operation{
+			Type:   Swap,
+			Index:  j - 1,
+			Char:   m.s2[j-1],
+			Result: prev.Result[:j-1] + m.s2[j-1:j] + prev.Result[j:],
+		})
+	case i > 0 && j > 0 && m.matrix[i-1][j-1] == m.matrix[i][j]:
+		ops := m.backtrace(i-1, j-1)
+		prev := ops[len(ops)-1]
+		return append(ops, Operation{
+			Type:   Keep,
+			Index:  j - 1,
+			Char:   prev.Result[j-1],
+			Result: prev.Result,
+		})
+	default:
+		return []Operation{{Result: m.s1}}
+	}
 }
 
 func min(nums ...int) int {
