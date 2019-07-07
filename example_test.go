@@ -27,26 +27,22 @@ func Example() {
 }
 
 func ExampleDistance() {
-	distance := levenshtein.Distance("horse", "arose")
-	fmt.Printf("Edit distance: %d\n", distance)
+	fmt.Println(levenshtein.Distance("horse", "arose"))
 
 	// Output:
-	// Edit distance: 3
+	// 3
 }
 
 func ExampleOperations() {
-	ops := levenshtein.Operations("horse", "arose")
-	fmt.Printf("Operations:\n")
-	for _, op := range ops {
-		fmt.Printf(" %s\n", op)
+	for _, op := range levenshtein.Operations("horse", "arose") {
+		fmt.Println(op)
 	}
 
 	// Output:
-	// Operations:
-	//    swap a at index 0: aorse
-	//  remove o at index 1: arse
-	//    keep r at index 1: arse
-	//  insert o at index 2: arose
-	//    keep s at index 3: arose
-	//    keep e at index 4: arose
+	//   swap a at index 0: aorse
+	// remove o at index 1: arse
+	//   keep r at index 1: arse
+	// insert o at index 2: arose
+	//   keep s at index 3: arose
+	//   keep e at index 4: arose
 }
