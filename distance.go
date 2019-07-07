@@ -1,9 +1,9 @@
-// Package levenshtein provides functions for calculating the levenshtein
-// distance (i.e. edit distance) between two strings, and for generating a
-// minimal list of edit operations required to convert the source string into
-// the target string. It does this by building an edit matrix according to the
-// Wagner-Fischer Algorithm. Alternative insertion/removal/swap costs can be
-// provided as options. The list of edit operations is retrieved via a
+// Package levenshtein provides functions for calculating the Levenshtein
+// distance (a type of edit distance) between two strings, and for generating
+// a minimal list of edit operations required to convert the source string
+// into the target string. It does this by building an edit matrix according
+// to the Wagner-Fischer Algorithm. Alternative insertion/removal/swap costs
+// can be provided as options. The list of edit operations is retrieved via a
 // recursive algorithm which reads off a backtrace of edit operations from the
 // matrix.
 //
