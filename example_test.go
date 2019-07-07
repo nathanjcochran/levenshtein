@@ -26,6 +26,18 @@ func Example() {
 	//    keep e at index 4: arose
 }
 
+func ExampleBuild() {
+	fmt.Println(levenshtein.Build("horse", "arose"))
+
+	// Output:
+	// 0 1 2 3 4 5
+	// 1 1 2 3 4 5
+	// 2 2 2 2 3 4
+	// 3 3 2 3 3 4
+	// 4 4 3 3 3 4
+	// 5 5 4 4 4 3
+}
+
 func ExampleMatrix_Distance() {
 	matrix := levenshtein.Build("horse", "arose")
 	fmt.Println(matrix.Distance())

@@ -11,7 +11,10 @@
 // https://en.wikipedia.org/wiki/Wagner–Fischer_algorithm
 package levenshtein
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Default costs for inserting, removing, and swapping characters.
 const (
@@ -73,6 +76,33 @@ type Matrix struct {
 	insertCost int
 	removeCost int
 	swapCost   int
+}
+
+// String returns a string representation of the edit matrix, with proper
+// column spacing.
+func (m *Matrix) String() string {
+	// Figure out what the largest value in the matrix is, and hence
+	// what the width of our columns should be
+	var max int
+	for _, row := range m.matrix {
+		for _, val := range row {
+			if val > max {
+				max = val
+			}
+		}
+	}
+	fmtStr := fmt.Sprintf("%%%dd", max/10+1)
+
+	// Assemble the string representation of the matrix
+	var rowStrs []string
+	for _, row := range m.matrix {
+		var strs []string
+		for _, val := range row {
+			strs = append(strs, fmt.Sprintf(fmtStr, val))
+		}
+		rowStrs = append(rowStrs, strings.Join(strs, " "))
+	}
+	return strings.Join(rowStrs, "\n")
 }
 
 // An Option which can be applied when generating an edit matrix or
