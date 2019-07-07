@@ -6,7 +6,7 @@ import (
 	"github.com/nathanjcochran/levenshtein"
 )
 
-func ExampleBuild() {
+func Example() {
 	matrix := levenshtein.Build("horse", "arose")
 
 	fmt.Printf("Edit distance: %d\n", matrix.Distance())
