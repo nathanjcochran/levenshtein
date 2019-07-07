@@ -26,11 +26,34 @@ func Example() {
 	//    keep e at index 4: arose
 }
 
+func ExampleMatrix_Distance() {
+	matrix := levenshtein.Build("horse", "arose")
+	fmt.Println(matrix.Distance())
+
+	// Output:
+	// 3
+}
+
 func ExampleDistance() {
 	fmt.Println(levenshtein.Distance("horse", "arose"))
 
 	// Output:
 	// 3
+}
+
+func ExampleMatrix_Operations() {
+	matrix := levenshtein.Build("horse", "arose")
+	for _, op := range matrix.Operations() {
+		fmt.Println(op)
+	}
+
+	// Output:
+	//   swap a at index 0: aorse
+	// remove o at index 1: arse
+	//   keep r at index 1: arse
+	// insert o at index 2: arose
+	//   keep s at index 3: arose
+	//   keep e at index 4: arose
 }
 
 func ExampleOperations() {
