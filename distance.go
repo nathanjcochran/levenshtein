@@ -2,43 +2,84 @@ package levenshtein
 
 import "fmt"
 
+type OpType int8
+
+const (
+	Add OpType = iota
+	Remove
+	Swap
+)
+
+func (o OpType) String() string {
+	switch o {
+	case Add:
+		return "add"
+	case Remove:
+		return "remove"
+	case Swap:
+		return "swap"
+	default:
+		panic(fmt.Sprintf("unexpected OpType: %v", o))
+	}
+}
+
+type Operation struct {
+	Type   OpType
+	Index  int
+	Char   byte
+	Result string
+}
+
+func (o Operation) String() string {
+	return fmt.Sprintf("%s %c at index %d: %s", o.Type, o.Char, o.Index, o.Result)
+}
+
 func Distance(s1, s2 string) int {
 	d := matrix(s1, s2)
 	return d[len(s1)][len(s2)]
 }
 
-func Operations(s1, s2 string) []string {
+func Operations(s1, s2 string) []Operation {
 	d := matrix(s1, s2)
 	ops := operations(s1, s2, len(s1), len(s2), d)
-	return ops
+	return ops[1:]
 }
 
-func operations(s1, s2 string, i, j int, d [][]int) []string {
+func operations(s1, s2 string, i, j int, d [][]int) []Operation {
 	switch {
-	case i == 0 && j == 0:
-		return []string{s1}
-	case i == 0:
-		ops := operations(s1, s2, i, j-1, d)
-		last := ops[len(ops)-1]
-		return append(ops, fmt.Sprintf("add %c at %d", s2[j-1], j-1), last[:j-1]+s2[j-1:j]+last[j-1:])
-	case j == 0:
+	case i > 0 && d[i-1][j]+1 == d[i][j]:
 		ops := operations(s1, s2, i-1, j, d)
-		last := ops[len(ops)-1]
-		return append(ops, fmt.Sprintf("delete %c at %d", last[j], j), last[:j]+last[j+1:])
-	case s1[i-1] == s2[j-1] && d[i][j] == d[i-1][j-1]:
-		return operations(s1, s2, i-1, j-1, d)
-	case d[i-1][j] <= min(d[i][j-1], d[i-1][j-1]):
-		ops := operations(s1, s2, i-1, j, d)
-		last := ops[len(ops)-1]
-		return append(ops, fmt.Sprintf("delete %c at %d", last[j], j), last[:j]+last[j+1:])
-	case d[i][j-1] <= min(d[i-1][j], d[i-1][j-1]):
+		prev := ops[len(ops)-1]
+		return append(ops, Operation{
+			Type:   Remove,
+			Index:  j,
+			Char:   prev.Result[j],
+			Result: prev.Result[:j] + prev.Result[j+1:],
+		})
+	case j > 0 && d[i][j-1]+1 == d[i][j]:
 		ops := operations(s1, s2, i, j-1, d)
-		last := ops[len(ops)-1]
-		return append(ops, fmt.Sprintf("add %c at %d", s2[j-1], j-1), last[:j-1]+s2[j-1:j]+last[j-1:])
-	default:
+		prev := ops[len(ops)-1]
+		return append(ops, Operation{
+			Type:   Add,
+			Index:  j - 1,
+			Char:   s2[j-1],
+			Result: prev.Result[:j-1] + s2[j-1:j] + prev.Result[j-1:],
+		})
+	case i > 0 && j > 0 && d[i-1][j-1]+1 == d[i][j]:
 		ops := operations(s1, s2, i-1, j-1, d)
-		last := ops[len(ops)-1]
-		return append(ops, fmt.Sprintf("swap %c for %c at %d", s2[j-1], s1[i-1], j-1), last[:j-1]+s2[j-1:j]+last[j:])
+		prev := ops[len(ops)-1]
+		return append(ops, Operation{
+			Type:   Swap,
+			Index:  j - 1,
+			Char:   s2[j-1],
+			Result: prev.Result[:j-1] + s2[j-1:j] + prev.Result[j:],
+		})
+	case i > 0 && j > 0 && d[i-1][j-1] == d[i][j]:
+		return operations(s1, s2, i-1, j-1, d)
+	default:
+		return []Operation{{
+			Result: s1,
+		}}
 	}
 }
 
