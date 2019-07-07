@@ -8,7 +8,7 @@
 // matrix.
 //
 // More information about the Wagner-Fischer algorithm can be found here:
-// https://en.wikipedia.org/wiki/Wagner–Fischer_algorithm
+// https://en.wikipedia.org/wiki/Wagner%E2%80%93Fischer_algorithm
 package levenshtein
 
 import (
