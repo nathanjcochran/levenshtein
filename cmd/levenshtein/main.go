@@ -16,9 +16,12 @@ func main() {
 		usage()
 	}
 
-	fmt.Println(levenshtein.Distance(os.Args[1], os.Args[2]))
-	for _, op := range levenshtein.Operations(os.Args[1], os.Args[2]) {
-		fmt.Println(op)
+	matrix := levenshtein.Build(os.Args[1], os.Args[2])
+
+	fmt.Printf("Edit distance: %d\n", matrix.Distance())
+	fmt.Printf("Operations:\n")
+	for _, op := range matrix.Operations() {
+		fmt.Printf(" %s\n", op)
 	}
 }
 

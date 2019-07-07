@@ -2,6 +2,14 @@ package levenshtein
 
 import "fmt"
 
+// Default costs for inserting, removing, and swapping characters.
+const (
+	DefaultInsertCost = 1
+	DefaultRemoveCost = 1
+	DefaultSwapCost   = 1
+)
+
+// OpType represents a type of edit operation.
 type OpType int8
 
 const (
@@ -11,6 +19,7 @@ const (
 	Swap
 )
 
+// String returns the string representation of an operation type.
 func (o OpType) String() string {
 	switch o {
 	case Insert:
@@ -22,122 +31,197 @@ func (o OpType) String() string {
 	case Swap:
 		return "swap"
 	default:
-		panic(fmt.Sprintf("invalid OpType: %d", o))
+		return "invalid"
 	}
 }
 
+// Operation represents one of the operations performed on a source string
+// during the process of converting it into a target string. Contains
+// information about the type of operation, the character affected, the index
+// at which the operation occured, and the intermediate result of performing
+// this operation.
 type Operation struct {
 	Type   OpType
-	Index  int
 	Char   byte
+	Index  int
 	Result string
 }
 
+// String returns the string representation of an operation.
 func (o Operation) String() string {
 	return fmt.Sprintf("%6s %c at index %d: %s", o.Type, o.Char, o.Index, o.Result)
 }
 
+// Matrix contains a two-dimensional matrix used for calculating edit
+// distances between two strings, and for retrieving a minimal list of edit
+// operations for converting the source string into the target string.
 type Matrix struct {
-	s1     string
-	s2     string
-	matrix [][]int
+	matrix     [][]int
+	source     string
+	target     string
+	insertCost int
+	removeCost int
+	swapCost   int
 }
 
-func Build(s1, s2 string) *Matrix {
-	m := make([][]int, len(s1)+1)
-	for i := range m {
-		m[i] = make([]int, len(s2)+1)
+// Option represents an option which can be applied when calculating the edit
+// distance between two strings - e.g. setting the insert/removal/swap cost.
+type Option func(m *Matrix)
+
+// SetInsertCost is an option which allows you to set a custom insertion cost
+// to use when calculating edit distances. If this option is not provided,
+// DefaultInsertCost is used instead.
+func SetInsertCost(cost int) Option {
+	return func(m *Matrix) {
+		m.insertCost = cost
+	}
+}
+
+// SetRemoveCost is an option which allows you to set a custom removal cost
+// to use when calculating edit distances. If this option is not provided,
+// DefaultRemoveCost is used instead.
+func SetRemoveCost(cost int) Option {
+	return func(m *Matrix) {
+		m.removeCost = cost
+	}
+}
+
+// SetSwapCost is an option which allows you to set a custom swap cost to use
+// when calculating edit distances. If this option is not provided,
+// DefaultSwapCost is used instead.
+func SetSwapCost(cost int) Option {
+	return func(m *Matrix) {
+		m.swapCost = cost
+	}
+}
+
+// Builds and fills a matrix for calculating the edit distance between the
+// source and target strings. The matrix can then be used to get the edit
+// distance between the strings, or to retrieve a list of the edit operations
+// required to transform the source string into the target string.
+func Build(source, target string, options ...Option) *Matrix {
+	m := &Matrix{
+		matrix:     newMatrix(source, target),
+		source:     source,
+		target:     target,
+		insertCost: DefaultInsertCost,
+		removeCost: DefaultRemoveCost,
+		swapCost:   DefaultSwapCost,
+	}
+	for _, option := range options {
+		option(m)
 	}
 
+	m.fill()
+	return m
+}
+
+func newMatrix(source, target string) [][]int {
+	m := make([][]int, len(source)+1)
+	for i := range m {
+		m[i] = make([]int, len(target)+1)
+	}
+	return m
+}
+
+func (m *Matrix) fill() {
 	// Deletions to get to empty target string from input string
-	for i := 1; i <= len(s1); i++ {
-		m[i][0] = i
+	for i := 1; i <= len(m.source); i++ {
+		m.matrix[i][0] = i
 	}
 
 	// Insertions to get to target string from empty string
-	for j := 1; j <= len(s2); j++ {
-		m[0][j] = j
+	for j := 1; j <= len(m.target); j++ {
+		m.matrix[0][j] = j
 	}
 
-	for i := 1; i <= len(s1); i++ {
-		for j := 1; j <= len(s2); j++ {
-			cost := 1
-			if s1[i-1] == s2[j-1] {
-				cost = 0
+	// Fill rest of matrix, using cheapest of three options for filling each
+	// cell (insert a character, delete a character, or swap a character)
+	for i := 1; i <= len(m.source); i++ {
+		for j := 1; j <= len(m.target); j++ {
+			swapCost := m.swapCost
+			if m.source[i-1] == m.target[j-1] {
+				swapCost = 0
 			}
 
-			m[i][j] = min(
-				m[i-1][j]+1,
-				m[i][j-1]+1,
-				m[i-1][j-1]+cost,
+			m.matrix[i][j] = min(
+				m.matrix[i][j-1]+m.insertCost,
+				m.matrix[i-1][j]+m.removeCost,
+				m.matrix[i-1][j-1]+swapCost,
 			)
 		}
 	}
-
-	return &Matrix{
-		s1:     s1,
-		s2:     s2,
-		matrix: m,
-	}
 }
 
-func Distance(s1, s2 string) int {
-	return Build(s1, s2).Distance()
+// Distance builds a matrix and returns the edit distance between the two
+// strings - i.e. the minimum number of edits required to transform the source
+// string into the target string.
+func Distance(source, target string) int {
+	return Build(source, target).Distance()
 }
 
-func Operations(s1, s2 string) []Operation {
-	return Build(s1, s2).Operations()
+// Operations builds a matrix and returns a minimal list of edit operations
+// required to transform the source string into the target string.
+func Operations(source, target string) []Operation {
+	return Build(source, target).Operations()
 }
 
+// Distance returns the edit distance between the two strings - i.e. the
+// minimum number of edits required to transform the source string into the
+// target string.
 func (m *Matrix) Distance() int {
-	return m.matrix[len(m.s1)][len(m.s2)]
+	return m.matrix[len(m.source)][len(m.target)]
 }
 
+// Operations returns a minimal list of edit operations required to transform
+// the source string into the target string.
 func (m *Matrix) Operations() []Operation {
-	ops := m.backtrace(len(m.s1), len(m.s2))
-	return ops[1:]
+	ops := m.backtrace(len(m.source), len(m.target))
+	return ops[1:] // Remove dummy operation
 }
 
 func (m *Matrix) backtrace(i, j int) []Operation {
 	switch {
-	case j > 0 && m.matrix[i][j-1]+1 == m.matrix[i][j]:
+	case j > 0 && m.matrix[i][j-1]+m.insertCost == m.matrix[i][j]:
 		ops := m.backtrace(i, j-1)
 		prev := ops[len(ops)-1]
 		return append(ops, Operation{
 			Type:   Insert,
+			Char:   m.target[j-1],
 			Index:  j - 1,
-			Char:   m.s2[j-1],
-			Result: prev.Result[:j-1] + m.s2[j-1:j] + prev.Result[j-1:],
+			Result: prev.Result[:j-1] + m.target[j-1:j] + prev.Result[j-1:],
 		})
-	case i > 0 && m.matrix[i-1][j]+1 == m.matrix[i][j]:
+	case i > 0 && m.matrix[i-1][j]+m.removeCost == m.matrix[i][j]:
 		ops := m.backtrace(i-1, j)
 		prev := ops[len(ops)-1]
 		return append(ops, Operation{
 			Type:   Remove,
-			Index:  j,
 			Char:   prev.Result[j],
+			Index:  j,
 			Result: prev.Result[:j] + prev.Result[j+1:],
 		})
-	case i > 0 && j > 0 && m.matrix[i-1][j-1]+1 == m.matrix[i][j]:
+	case i > 0 && j > 0 && m.matrix[i-1][j-1]+m.swapCost == m.matrix[i][j]:
 		ops := m.backtrace(i-1, j-1)
 		prev := ops[len(ops)-1]
 		return append(ops, Operation{
 			Type:   Swap,
+			Char:   m.target[j-1],
 			Index:  j - 1,
-			Char:   m.s2[j-1],
-			Result: prev.Result[:j-1] + m.s2[j-1:j] + prev.Result[j:],
+			Result: prev.Result[:j-1] + m.target[j-1:j] + prev.Result[j:],
 		})
 	case i > 0 && j > 0 && m.matrix[i-1][j-1] == m.matrix[i][j]:
 		ops := m.backtrace(i-1, j-1)
 		prev := ops[len(ops)-1]
 		return append(ops, Operation{
 			Type:   Keep,
-			Index:  j - 1,
 			Char:   prev.Result[j-1],
+			Index:  j - 1,
 			Result: prev.Result,
 		})
 	default:
-		return []Operation{{Result: m.s1}}
+		// Base case: return the original source string. This dummy operation
+		// is removed before the final list of operations is returned.
+		return []Operation{{Result: m.source}}
 	}
 }
 
