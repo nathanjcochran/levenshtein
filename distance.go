@@ -102,7 +102,6 @@ func SetSwapCost(cost int) Option {
 func Build(source, target string, options ...Option) *Matrix {
 	s := []rune(source)
 	t := []rune(target)
-
 	m := &Matrix{
 		matrix:     newMatrix(s, t),
 		source:     s,
